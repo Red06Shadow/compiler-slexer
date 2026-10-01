@@ -16,7 +16,7 @@ int main(int argc, char const *argv[])
         if (argc == 1)
             return 0;
         std::cout << "\033[1;37m" << "Iniciando..."  << "\033[0m" << std::endl;
-        if (argc > 2)
+        if (argc > 3)
             throw std::runtime_error("Solo se permite un parametro.");
         std::filesystem::path path{argv[1]};
         if (!std::filesystem::exists(path))
@@ -25,7 +25,21 @@ int main(int argc, char const *argv[])
             throw std::runtime_error("La ruta al archivo " + path.string() + "; no es un archivo.");
         if (path.extension() != ".slex")
             throw std::runtime_error("El archivo no representa un archivo de slexer, debe terminar en slexer; " + path.string() + ".");
-        std::filesystem::path folder = path.parent_path() / "export";
+            
+        std::filesystem::path folder;
+        if (argc == 3)
+        {
+            folder = std::filesystem::path(argv[2]);
+            if (!std::filesystem::exists(folder))
+                std::filesystem::create_directory(folder);
+            else if (!std::filesystem::is_directory(folder))
+                throw std::runtime_error("La ruta al archivo " + folder.string() + "; no es un directorio.");
+        }
+        else
+        {
+            folder = path.parent_path() / "export";
+        }
+        
         if (!std::filesystem::exists(folder))
             std::filesystem::create_directory(folder);
         std::filesystem::path hpp = folder / "ylexer.hpp";
@@ -48,11 +62,6 @@ int main(int argc, char const *argv[])
         in = std::basic_ifstream<char>(path);
         parser::outhpp << "//your code" << std::endl;
         parser::load(in);
-        std::cout << "[INFO]>> charT: " << parser::chartype << std::endl;
-        std::cout << "[INFO]>> expresions: " << std::endl;
-        for (auto &&i : parser::expresions)
-            std::cout << i;
-        std::cout << std::endl;
         std::cout << "\033[1;32m" << "Datos procesados." << "\033[0m" << std::endl;
         parser::outhpp << "//your code" << std::endl << "extern slexer::basic_lexer<" << parser::chartype << "," << parser::idtype << "> ylexer;" << std::endl
                << "#endif" << std::endl;
@@ -70,6 +79,10 @@ int main(int argc, char const *argv[])
         if (!compiler::compile(folder, hpp, cpp)) 
             throw std::runtime_error("Error: al compilar los archivos.");
         std::cout << "\033[1;32m" << "Compilacion completada." << "\033[0m" << std::endl;
+    }
+    catch (const myregex::basic_regex_error<char>&e) {
+        std::cerr << "\033[1;31m" << e.what()
+        << "\033[1;31m" << e.especification() << "\033[0m" << std::endl;
     }
     catch (const std::exception &e)
     {
