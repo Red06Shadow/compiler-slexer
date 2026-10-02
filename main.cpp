@@ -60,10 +60,10 @@ int main(int argc, char const *argv[])
         } while (!in.eof());
         in.close();
         in = std::basic_ifstream<char>(path);
-        parser::outhpp << "//your code" << std::endl;
+        parser::outhpp << "#pragma yourcode\n//your code" << std::endl;
         parser::load(in);
         std::cout << "\033[1;32m" << "Datos procesados." << "\033[0m" << std::endl;
-        parser::outhpp << "//your code" << std::endl << "extern slexer::basic_lexer<" << parser::chartype << "," << parser::idtype << "> ylexer;" << std::endl
+        parser::outhpp << "#pragma yourcode\n//your code" << std::endl << "extern slexer::basic_lexer<" << parser::chartype << "," << parser::idtype << "> ylexer;" << std::endl
                << "#endif" << std::endl;
         in.close();
         std::cout << "\033[1;37m" << "Generando tablas..." << "\033[0m" << std::endl;

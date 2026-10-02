@@ -31,7 +31,7 @@ char
 #.main#
 #.exp#
 0
-"[0-9]+"
+[0-9]+
 defaultf(char, size_t)
 #.end#
 #.end#
