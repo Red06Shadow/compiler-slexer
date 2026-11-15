@@ -1,92 +1,92 @@
-#include <core/parser/parser.hpp>
+#include <iostream>
 #include <filesystem>
-#include <core/generate/generate.hpp>
-#include <core/export/export.hpp>
+#include <global/global.hpp>
+#include <core/parser/parser.hpp>
+#include <core/clone/clone.hpp>
+#include <core/build/build.hpp>
 #include <core/compiler/compiler.hpp>
-
-/////////////////////////////////////////////////////////////////////////////////////////
-std::vector<myregex::table<size_t>> _M_tables {};
-std::vector<myregex::wtable<size_t>> _M_wtables {};
+#include <core/clean/clean.hpp>
+#include <myregex/exceptions/error.hpp>
 /////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char const *argv[])
 {
+    global::installing = std::move(std::filesystem::path(argv[0]).parent_path().parent_path());
+    global::repository = std::move(global::installing / "repository");
     try
     {
-        if (argc == 1)
-            return 0;
+        git_libgit2_init();
         std::cout << "\033[1;37m" << "Iniciando..."  << "\033[0m" << std::endl;
-        if (argc > 3)
-            throw std::runtime_error("Solo se permite un parametro.");
-        std::filesystem::path path{argv[1]};
-        if (!std::filesystem::exists(path))
-            throw std::runtime_error("La ruta al archivo " + path.string() + "; no existe.");
-        if (!std::filesystem::is_regular_file(path))
-            throw std::runtime_error("La ruta al archivo " + path.string() + "; no es un archivo.");
-        if (path.extension() != ".slex")
-            throw std::runtime_error("El archivo no representa un archivo de slexer, debe terminar en slexer; " + path.string() + ".");
-            
-        std::filesystem::path folder;
-        if (argc == 3)
+        std::cout << "\033[1;37m" << "Verificando parametros..."  << "\033[0m" << std::endl;
+        if (argc == 1)
         {
-            folder = std::filesystem::path(argv[2]);
-            if (!std::filesystem::exists(folder))
-                std::filesystem::create_directory(folder);
-            else if (!std::filesystem::is_directory(folder))
-                throw std::runtime_error("La ruta al archivo " + folder.string() + "; no es un directorio.");
+            global::source = "C:\\Proyectos(Red06Shadow)\\c++\\slexer-compiler\\test\\test0001.yaml";
+            global::destine = "C:\\Proyectos(Red06Shadow)\\c++\\slexer-compiler\\test\\export";
         }
         else
         {
-            folder = path.parent_path() / "export";
-        }
-        
-        if (!std::filesystem::exists(folder))
-            std::filesystem::create_directory(folder);
-        std::filesystem::path hpp = folder / "ylexer.hpp";
-        std::filesystem::path cpp = folder / "ylexer.cpp";
-        
-        parser::outhpp = std::basic_ofstream<char>(hpp);
-        parser::outcpp = std::basic_ofstream<char>(cpp);
-        parser::outhpp << "#ifndef YOURSLEXER" << std::endl
-               << "#define YOURSLEXER" << std::endl;
-        std::cout << "\033[1;37m" << "Cargando datos..."  << "\033[0m" << std::endl;
-        std::basic_ifstream<char> in{std::filesystem::path(argv[0]).parent_path() / "clone" / "master.hpp"};
-        char buffer[4096] = {};
-        size_t n = 0;
-        do
-        {
-            n = in.read(buffer, 4096).gcount();
-            parser::outhpp.write(buffer, n);
-        } while (!in.eof());
-        in.close();
-        in = std::basic_ifstream<char>(path);
-        parser::outhpp << "#pragma yourcode\n//your code" << std::endl;
-        parser::load(in);
-        std::cout << "\033[1;32m" << "Datos procesados." << "\033[0m" << std::endl;
-        parser::outhpp << "#pragma yourcode\n//your code" << std::endl << "extern slexer::basic_lexer<" << parser::chartype << "," << parser::idtype << "> ylexer;" << std::endl
-               << "#endif" << std::endl;
-        in.close();
-        std::cout << "\033[1;37m" << "Generando tablas..." << "\033[0m" << std::endl;
-        generate::build_char_expresions(parser::expresions, _M_tables);
-        std::cout << "\033[1;32m" << "Tablas generadas correctamente." << "\033[0m" << std::endl;
-        std::cout << "\033[1;37m" << "Exportando datos finales..." << "\033[0m" << std::endl;
-        export_::export_tables_char(_M_tables, parser::expresions, parser::idtype, parser::outcpp);
-        std::cout << "\033[1;32m" << "Datos finales exportados." << "\033[0m" << std::endl;
-        parser::outhpp.close();
-        parser::outcpp.close();
 
-        std::cout << "\033[1;37m" << "Compilando libreria..." << "\033[0m" << std::endl;
-        if (!compiler::compile(folder, hpp, cpp)) 
-            throw std::runtime_error("Error: al compilar los archivos.");
-        std::cout << "\033[1;32m" << "Compilacion completada." << "\033[0m" << std::endl;
+            if (argc > 3)
+                throw std::runtime_error("Solo se permite un parametro.");
+            global::source = std::filesystem::path(argv[1]);
+            if (!std::filesystem::exists(global::source))
+                throw std::runtime_error("La ruta al archivo " + global::source.string() + "; no existe.");
+            if (!std::filesystem::is_regular_file(global::source))
+                throw std::runtime_error("La ruta al archivo " + global::source.string() + "; no es un archivo.");    
+            if (argc == 3)
+            {
+                global::destine = std::filesystem::path(argv[2]);
+                if (!std::filesystem::exists(global::destine))
+                    std::filesystem::create_directory(global::destine);
+                else if (!std::filesystem::is_directory(global::destine))
+                    throw std::runtime_error("La ruta al archivo " + global::destine.string() + "; no es un directorio.");
+            }
+            else
+            {
+                global::destine = global::source.parent_path() / "export";
+            }
+        }
+        std::filesystem::create_directory(global::destine);
+        std::cout << "\033[1;32m" << "Verificacion completada." << "\033[0m" << std::endl;
+        std::cout << "\033[1;37m" << "Cargando datos..."  << "\033[0m" << std::endl;
+        if (global::source.extension() == ".yaml")
+            parser::parser_with_yaml(global::source);
+        else
+            throw std::runtime_error("El archivo no representa un archivo de slexer, debe terminar en slexer; " + global::source.string() + ".");
+        clone::clone_(global::repository, global::destine);
+        std::cout << "\033[1;32m" << "Datos cargados." << "\033[0m" << std::endl;
+        std::cout << "\033[1;37m" << "Generando estructura..."  << "\033[0m" << std::endl;
+        build::build_files(parser::includes(), global::destine);
+        build::build_hpp(parser::hpp(), parser::metadata(), global::destine);
+        std::cout << "\033[1;32m" << "Estructura generada." << "\033[0m" << std::endl;
+        std::cout << "\033[1;37m" << "Construyendo reglas..."  << "\033[0m" << std::endl;
+        build::build_cpp(parser::cpp(), parser::metadata(), parser::options(), global::destine);
+        std::cout << "\033[1;32m" << "Reglas generada." << "\033[0m" << std::endl;
+        std::cout << "\033[1;37m" << "Compilado..."  << "\033[0m" << std::endl;
+        compiler::compile(global::destine);
+        std::cout << "\033[1;32m" << "Compilacion terminda." << "\033[0m" << std::endl;
+        std::cout << "\033[1;37m" << "Limpiando y terminando..."  << "\033[0m" << std::endl;
+        clean::clear(global::destine, global::repository, parser::hpp(), parser::metadata());
+        std::cout << "\033[1;32m" << "Operacion terminada." << "\033[0m" << std::endl;
     }
-    catch (const myregex::basic_regex_error<char>&e) {
-        std::cerr << "\033[1;31m" << e.what()
-        << "\033[1;31m" << e.especification() << "\033[0m" << std::endl;
+    catch (const myregex::basic_lexicar_error<char>&e) {
+        std::cerr << "\033[1;31m";
+        e.view(std::cerr);
+        std::cerr << "\033[0m" << std::endl;
+        if(!global::destine.empty())
+            std::filesystem::remove_all(global::destine);
     }
+    // catch (const myregex::basic_lexicar_error<wchar_t>&e) {
+    //     std::cerr << "\033[1;31m";
+    //     e.view(std::wcerr);
+    //     std::cerr << "\033[0m" << std::endl;
+    // }
     catch (const std::exception &e)
     {
         std::cerr << "\033[1;31m" << e.what() << "\033[0m" << std::endl;
+        if(!global::destine.empty()) 
+            std::filesystem::remove_all(global::destine);
     }
+    git_libgit2_shutdown();
     return 0;
 }

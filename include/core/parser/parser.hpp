@@ -1,218 +1,34 @@
-#ifndef READERHPP
-#define READERHPP
+#ifndef __COMPILER__LEXER__PARSER
+#define __COMPILER__LEXER__PARSER
 
-#include <myregex/myregex.hpp>
-#include <fstream>
-#include <core/global/global.hpp>
+#include <core/expresions/expresions.hpp>
+#include <yaml-cpp/yaml.h>
+
 
 class parser
 {
-public:
-    inline static std::string chartype{};
-    inline static std::string idtype{};
-    inline static std::basic_ofstream<char> outhpp{};
-    inline static std::basic_ofstream<char> outcpp{};
-    inline static std::vector<expresion> expresions{};
-
 private:
-    typedef void (*Handle)(std::basic_ifstream<char> &);
+    inline static bool _S_define_start = false;
+    inline static uint64_t _S_id = 1U;
+    inline static listfiles _S_includes {};
+    inline static listoptions _S_regexs {};
+    inline static expresions::metadata _S_metadata {};
 
-    inline static myregex::regex<size_t> head = myregex::builder<size_t>({
-                                                                             {1, "#.hpp#"},
-                                                                             {2, "#.cpp#"},
-                                                                             {3, "#.expresion#"},
-                                                                             {4, "#.metadata#"},
-                                                                             {5, "#.typeid#"},
-                                                                             {6, "#.typechar#"},
-                                                                             {7, "#.main#"},
-                                                                             {8, "#.option#"},
-                                                                             {9, "#.exp#"},
-                                                                             {10, "#.end#"},
-                                                                         })
-                                                    .convert_to_dfa()
-                                                    .convert_to_table()
-                                                    .build();
+    inline static expresions::file _S_main_hpp {};
+    inline static expresions::file _S_main_cpp {};
 
+    static expresions::rule _S_parser_rule(const YAML::Node& root);
+    static expresions::options _S_parser_regex(const YAML::Node& root, bool isStart);
+    static void _S_parser_slexer(const YAML::Node& root);
+    static void _S_parser_root(const YAML::Node& root);
+    static expresions::file _S_parser_include(const YAML::Node& incld);
 public:
-    static void load(std::basic_ifstream<char> &);
-
-private:
-    static void hpphead(std::basic_ifstream<char> &in);
-    static void cpphead(std::basic_ifstream<char> &in);
-    static void metadatahead(std::basic_ifstream<char> &in);
-    static void expresionmainhead(std::basic_ifstream<char> &in);
-    static void regularexpresion(std::basic_ifstream<char> &in, size_t idaction);
-
-    inline static Handle handle[10] = {
-        nullptr,
-        hpphead,
-        cpphead,
-        expresionmainhead,
-        metadatahead,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-    };
+    static void parser_with_yaml(const std::filesystem::path& in);
+    static expresions::metadata& metadata() { return _S_metadata; }
+    static listfiles& includes() { return _S_includes; }
+    static expresions::file& hpp() { return _S_main_hpp; }
+    static expresions::file& cpp() { return _S_main_cpp; }
+    static listoptions& options() { return _S_regexs; }
 };
 
-void parser::hpphead(std::basic_ifstream<char> &in)
-{
-    while (!in.eof())
-    {
-        std::string line{};
-        std::getline(in, line);
-        basic_string_range<char> range{line};
-        size_t id = head.match<myregex::constants::match_maximun>(range).id();
-        if (id == 10)
-        {
-            if (range.peak() != range.end())
-                throw std::runtime_error("La linea solo debe pertenecer a la cabecera");
-            break;
-        }
-        outhpp << line << std::endl;
-    }
-}
-void parser::cpphead(std::basic_ifstream<char> &in)
-{
-    while (!in.eof())
-    {
-        std::string line{};
-        std::getline(in, line);
-        basic_string_range<char> range{line};
-        size_t id = head.match<myregex::constants::match_maximun>(range).id();
-        if (id == 10)
-        {
-            if (range.peak() != range.end())
-                throw std::runtime_error("La linea solo debe pertenecer a la cabecera");
-            break;
-        }
-        outcpp << line << std::endl;
-    }
-}
-void parser::metadatahead(std::basic_ifstream<char> &in)
-{
-    std::string line{};
-    size_t id = 0;
-    //////////////////////////////////////////////////////////////////////////////////
-    if (in.eof())
-        throw std::runtime_error("Se esperaba la cabecera de typeid(#.typeid#)");
-    std::getline(in, line);
-    basic_string_range<char> range{line};
-    id = head.match<myregex::constants::match_maximun>(range).id();
-    if (id != 5)
-        throw std::runtime_error("Se esperaba la cabecera de typeid(#.typeid#)");
-    //////////////////////////////////////////////////////////////////////////////////
-    if (in.eof())
-        throw std::runtime_error("Se esperaba un texto plano con el tipo de id");
-    std::getline(in, line);
-    range = basic_string_range<char>(line);
-    id = head.match<myregex::constants::match_maximun>(range).id();
-    if (id != 0)
-        throw std::runtime_error("Se esperaba un texto plano con el tipo de id");
-    idtype = line;
-    line.clear();
-    //////////////////////////////////////////////////////////////////////////////////
-    if (in.eof())
-        throw std::runtime_error("Se esperaba la cabecera de typechar(#.typechar#)");
-    std::getline(in, line);
-    range = basic_string_range<char>(line);
-    id = head.match<myregex::constants::match_maximun>(range).id();
-    if (id != 6)
-        throw std::runtime_error("Se esperaba la cabecera de typechar(#.typechar#)");
-    //////////////////////////////////////////////////////////////////////////////////
-    if (in.eof())
-        throw std::runtime_error("Se esperaba un texto plano con el tipo de caracter");
-    std::getline(in, line);
-    range = basic_string_range<char>(line);
-    id = head.match<myregex::constants::match_maximun>(range).id();
-    if (id != 0)
-        throw std::runtime_error("Se esperaba un texto plano con el tipo de caracter");
-    chartype = line;
-    line.clear();
-}
-void parser::expresionmainhead(std::basic_ifstream<char> &in)
-{
-    std::string line{};
-    size_t id = 0;
-    size_t count = 0;
-    //////////////////////////////////////////////////////////////////////////////////
-    if (in.eof())
-        throw std::runtime_error("Se esperaba la cabecera de main(#.main#)");
-    std::getline(in, line);
-    basic_string_range<char> range{line};
-    id = head.match<myregex::constants::match_maximun>(range).id();
-    if (id != 7)
-        throw std::runtime_error("Se esperaba la cabecera de main(#.main#)");
-    regularexpresion(in, count++);
-    line.clear();
-    do
-    {
-        if (in.eof())
-            throw std::runtime_error("Se esperaba la cabecera de cierre u otra de definicion de reglas(#.end# o #.option#)");
-        std::getline(in, line);
-        basic_string_range<char> range{line};
-        id = head.match<myregex::constants::match_maximun>(range).id();
-        if (id == 10)
-            break;
-        if (id != 8)
-            throw std::runtime_error("Se esperaba la cabecera de option(#.option#)");
-        regularexpresion(in, count++);
-        line.clear();
-    } while (true);
-}
-
-void parser::regularexpresion(std::basic_ifstream<char> &in, size_t idaction)
-{
-    std::string line{};
-    size_t id = 0;
-    //////////////////////////////////////////////////////////////////////////////////
-    do
-    {
-        if (in.eof())
-            throw std::runtime_error("Se esperaba la cabecera de cierre u otra de definicion de reglas(#.end# o #.option#)");
-        std::getline(in, line);
-        basic_string_range<char> range{line};
-        id = head.match<myregex::constants::match_maximun>(range).id();
-        if (id == 10)
-            break;
-        if (id != 9)
-            throw std::runtime_error("Se esperaba la cabecera de exp(#.exp#)");
-        line.clear();
-        expresion _exp {};
-        if (in.eof())
-            throw std::runtime_error("Se esperaba el texto plano del id");
-        std::getline(in, _exp.id);
-        if (in.eof())
-            throw std::runtime_error("Se esperaba el texto plano de la expresion regular");
-        std::getline(in, _exp.regex);
-        if (in.eof())
-            throw std::runtime_error("Se esperaba el texto plano de la funcion");
-        std::getline(in, _exp.funtion);
-        _exp.idreal = idaction;
-        expresions.push_back(_exp);
-    } while (true);
-}
-
-void parser::load(std::basic_ifstream<char> &in)
-{
-    while (!in.eof())
-    {
-        std::string line{};
-        std::getline(in, line);
-
-        if (line.empty())
-            continue;
-
-        basic_string_range<char> range{line};
-
-        size_t id = head.match<myregex::constants::match_maximun>(range).id();
-        if (id == 0)
-            throw std::runtime_error("Todo archivo debe iniciar con una cabecera(o #.hpp# o #.exp# o #.cpp#)");
-        if (range.peak() != range.end())
-            throw std::runtime_error("La linea solo debe pertenecer a la cabecera");
-        handle[id](in);
-    }
-}
 #endif

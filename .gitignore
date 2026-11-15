@@ -1,4 +1,5 @@
-test
+build
 debug
 release
-build
+test
+slexer-compiler.code-workspace

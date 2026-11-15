@@ -1,5 +1,5 @@
-#ifndef COMPILER
-#define COMPILER
+#ifndef __COMPILER__LEXER__COMPILER
+#define __COMPILER__LEXER__COMPILER
 
 #include <filesystem>
 #include <iostream>
@@ -8,17 +8,20 @@ class compiler
 {
 
 public:
-    static bool compile(const std::filesystem::path&, const std::filesystem::path&, const std::filesystem::path&);
+    static bool compile(const std::filesystem::path&);
 };
 
-bool compiler::compile(const std::filesystem::path& parent, const std::filesystem::path& hpp, const std::filesystem::path& cpp) {
-    std::string compiler_comannd = "cd \"" + parent.string() + "\" && g++ -fdiagnostics-color=always -c ylexer.cpp -o ylexer.o";
-    std::cout << "\033[1;37m" << compiler_comannd << "\033[0" << std::endl;
-    if (std::system(compiler_comannd.c_str())) return false;
-    std::string arc_comannd = "cd \"" + parent.string() + "\" && ar rcs liblexer.a -o ylexer.o";
-    std::cout << "\033[1;37m" << arc_comannd << "\033[0" << std::endl;
-    if (std::system(arc_comannd.c_str())) return false;
-    return true;
+bool compiler::compile(const std::filesystem::path& sources) {
+    std::string gcmd = "cd \"" + sources.string() + "\" && g++ -fdiagnostics-color=always -c -Iinclude/slexer -Iinclude \"yourslexer.cpp\" -o yourslexer.o";
+    std::cout << "\033[1;37m" << gcmd << "\033[0" << std::endl;
+    if (std::system(gcmd.c_str()))
+        throw std::runtime_error("Error fatal: fallos de compilacion del lexer.");
+    //////////////////////////////////////////////////////////////////////////////////////
+    std::string acmd = "cd \"" + sources.string() + "\" && ar rcs libyourslexer.a -o yourslexer.o";
+    std::cout << "\033[1;37m" << acmd << "\033[0" << std::endl;
+    if (std::system(acmd.c_str()))
+        throw std::runtime_error("Error fatal: fallos generacion de libreria.");
+    return 0;
 }
 
 
