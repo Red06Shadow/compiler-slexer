@@ -78,10 +78,10 @@ void myregex::basic_lexicar_error<charT>::view(std::basic_ostream<charT>& out) c
     std::basic_string<charT> line {};
     line.reserve(_M_ocurrence.size());
     if constexpr (std::is_same_v<charT, wchar_t>)
-        out << L"error in generate regex : " << _M_message << std::endl
+        out << L"error generating regex: " << _M_message << std::endl
         << _M_ocurrence << std::endl;
     else
-        out << "error in generate regex : " << _M_message << std::endl
+        out << "error generating regex: " << _M_message << std::endl
         << _M_ocurrence << std::endl;
     
     for (typename std::basic_string_view<charT>::const_iterator i = _M_ocurrence.begin(); i != _M_ocurrence.end() + 1ULL; i++)
@@ -105,10 +105,10 @@ void myregex::basic_analizer_error<charT>::view(std::basic_ostream<charT>& out) 
     std::basic_string<charT> line {};
     line.reserve(_M_ocurrence.size());
     if constexpr (std::is_same_v<charT, wchar_t>)
-        out << L"error analizer : " << _M_message << std::endl
+        out << L"analyzer error: " << _M_message << std::endl
         << _M_ocurrence << std::endl;
     else
-        out << "error analizer : " << _M_message << std::endl
+        out << "analyzer error: " << _M_message << std::endl
         << _M_ocurrence << std::endl;
     
     for (typename std::basic_string_view<charT>::const_iterator i = _M_ocurrence.begin(); i != _M_ocurrence.end(); i++)

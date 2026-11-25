@@ -3,14 +3,12 @@
 
 
 expresions::file parser::_S_parser_include(const YAML::Node& incld) {
-    // if (!incld["content"] && !incld["reference"])
-    //     throw YAML::RepresentationException(root.Mark(), "Se necesita que se defina un conjunto de reglas a procesar");
     return {.path = incld["path"].as<std::basic_string<char>>(), .content = incld["content"].as<std::basic_string<char>>("")};
 }
 
 expresions::rule parser::_S_parser_rule(const YAML::Node& root) {
     if(!root.IsMap() || root.size() != 3)
-        throw YAML::RepresentationException(root.Mark(), "Se necesita que se defina un conjunto de reglas a procesar");
+        throw YAML::RepresentationException(root.Mark(), "A complete set of rules to process must be defined");
     return {
         .rege = root["expresion"].as<std::basic_string<char>>(),
         .id = root["id"].as<std::basic_string<char>>(),
@@ -21,7 +19,7 @@ expresions::rule parser::_S_parser_rule(const YAML::Node& root) {
 expresions::options parser::_S_parser_regex(const YAML::Node& root, bool isStart) {
     std::vector<expresions::rule> _M_rule {};
     if (!root.IsSequence())
-        throw YAML::RepresentationException(root.Mark(), "Se necesita que se defina un conjunto de reglas a procesar");
+        throw YAML::RepresentationException(root.Mark(), "A complete set of rules to process must be defined");
     for (const auto& reg : root)
         _M_rule.push_back(std::move(parser::_S_parser_rule(reg)));
     return {.id = isStart ? 0U : _S_id++, .rules = std::move(_M_rule)};
@@ -29,7 +27,7 @@ expresions::options parser::_S_parser_regex(const YAML::Node& root, bool isStart
 void parser::_S_parser_slexer(const YAML::Node& root) {
     _S_metadata.chartype = root["typechar"].as<std::basic_string<char>>();
     if (_S_metadata.chartype != "ASCII" && _S_metadata.chartype != "UNICODE")
-        throw YAML::RepresentationException(root.Mark(), "Se necesita que se defina un conjunto de reglas a procesar");
+        throw YAML::RepresentationException(root.Mark(), "A complete set of rules to process must be defined");
     _S_metadata.idtype = root["typeid"].as<std::basic_string<char>>();
     parser::_S_main_hpp = 
         { .path = "yourslexer.hpp",
@@ -45,7 +43,7 @@ void parser::_S_parser_slexer(const YAML::Node& root) {
     for (const auto& group : root["regex"])
     {
         if(!group.IsMap() || group.size() != 1)
-            throw YAML::RepresentationException(root.Mark(), "Se necesita que se defina un conjunto de reglas a procesar");
+            throw YAML::RepresentationException(root.Mark(), "A complete set of rules to process must be defined");
         bool isStart;
         if ((isStart = group.begin()->first.as<std::basic_string<char>>() == "start"))
             _S_define_start = true;
@@ -70,13 +68,13 @@ void parser::parser_with_yaml(const std::filesystem::path& path) {
         YAML::Node root = YAML::LoadFile(path.string());
         parser::_S_parser_root(root);
         if (!_S_define_start)
-            throw std::runtime_error("Se necesita que se defina un conjunto de reglas a procesar con el nombre de start");
+            throw std::runtime_error("A set of rules named start must be defined");
     }
     catch(const YAML::Exception& e) {
-        std::cerr << "Error: en yaml: " << e.what() << std::endl;
+        std::cerr << "YAML error: " << e.what() << std::endl;
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << e.what() << std::endl;
+        std::cerr << e.what() << std::endl;
     }
 }

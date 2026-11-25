@@ -15,7 +15,7 @@ namespace myregex
     template <typename charT, typename idT>
     class caption
     {
-        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: no se permiten tipos de datos que no sean de caracteres(solo char o wchar_t)");
+        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: only character data types are allowed (char or wchar_t)");
 
     private:
         typename std::basic_string_view<charT> _M_string;
@@ -75,7 +75,7 @@ namespace myregex
     class basic_regex
     {
     private:
-        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: no se permiten tipos de datos que no sean de caracteres(solo char o wchar_t)");
+        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: only character data types are allowed (char or wchar_t)");
         std::variant<basic_nfa<charT, idT>, basic_dfa<charT, idT>, basic_table<charT, idT>> _M_expresions;
 
     public:

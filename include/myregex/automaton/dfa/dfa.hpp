@@ -19,7 +19,7 @@ namespace myregex
     class basic_dfa
     {
     public: //  Structs, Enums, Class
-        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: no se permiten tipos de datos que no sean de caracteres(solo char o wchar_t)");
+        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: only character data types are allowed (char or wchar_t)");
         using Qdfa = std::vector<myregex::state<idT>>;
         using Transitions = std::map<std::pair<size_t, charT>, size_t>;
 

@@ -56,7 +56,7 @@ namespace myregex
     template <typename charT, typename idT>
     class basic_table
     {
-        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: no se permiten tipos de datos que no sean de caracteres(solo char o wchar_t)");
+        static_assert(std::is_same_v<charT, char> || std::is_same_v<charT, wchar_t>, "Error: only character data types are allowed (char or wchar_t)");
 
     public:
         using Qtable = std::vector<myregex::state<idT>>;

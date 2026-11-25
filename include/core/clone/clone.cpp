@@ -7,14 +7,14 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
     if (error != 0)
     {
         const git_error *e = git_error_last();
-        throw std::runtime_error("Critical error: " + std::string(e && e->message ? e->message : "Error desconocido"));
+        throw std::runtime_error("Critical error: " + std::string(e && e->message ? e->message : "Unknown error"));
     }
     git_remote *remote = nullptr;
     error = git_remote_lookup(&remote, repo, "origin");
     if (error != 0)
     {
         git_repository_free(repo);
-        throw std::runtime_error("Error al verificar el repositorio: " + std::string(git_error_last()->message));
+        throw std::runtime_error("Error checking the repository: " + std::string(git_error_last()->message));
     }
     error = git_remote_fetch(remote, nullptr, nullptr, nullptr);
     if (error != 0)
@@ -22,7 +22,7 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
         const git_error *e = git_error_last();
         git_remote_free(remote);
         git_repository_free(repo);
-        throw std::runtime_error("No ha podido competare el fecth del repositorio: " + std::string(e && e->message ? e->message : "Error desconocido"));
+        throw std::runtime_error("Could not complete the repository fetch: " + std::string(e && e->message ? e->message : "Unknown error"));
     }
 
     git_reference *localref = nullptr;
@@ -33,7 +33,7 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
     {
         git_remote_free(remote);
         git_repository_free(repo);
-        throw std::runtime_error("No existe el HEAD en este repositorio.");
+        throw std::runtime_error("This repository has no HEAD.");
     }
 
     error = git_reference_lookup(&remoteref, repo, "refs/remotes/origin/main");
@@ -45,7 +45,7 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
             git_reference_free(localref);
             git_remote_free(remote);
             git_repository_free(repo);
-            throw std::runtime_error("No pudo encontrarse la rama de lectura.");
+            throw std::runtime_error("Could not find the source branch.");
         }
     }
 
@@ -62,12 +62,12 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
     error = git_annotated_commit_lookup(&merge_commit, repo, &remote_oid);
     if (error != 0)
     {
-        std::cerr << "No se pudo preparar el merge.\n";
+        std::cerr << "Could not prepare the merge.\n";
         git_reference_free(remoteref);
         git_reference_free(localref);
         git_remote_free(remote);
         git_repository_free(repo);
-        throw std::runtime_error("No pudo prepararse el merge.");
+        throw std::runtime_error("Could not prepare the merge.");
     }
 
     git_merge_analysis_t analysis;
@@ -76,7 +76,7 @@ void clone::_S_pull_repo(const std::filesystem::path &path)
 
     if (error == 0 && (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) == 0)
     {
-        std::cout << "Clonando repositorio..." << std::endl;
+        std::cout << "Cloning repository..." << std::endl;
     }
 
     git_annotated_commit_free(merge_commit);
@@ -92,14 +92,14 @@ void clone::_S_clone_repo(const std::filesystem::path &path)
     git_repository *repo = nullptr;
     git_clone_options options = GIT_CLONE_OPTIONS_INIT;
     options.checkout_branch = "main";
-    std::cout << "Clonando repositorio..." << std::endl;
+    std::cout << "Cloning repository..." << std::endl;
     int error = git_clone(&repo, url.c_str(), path.string().c_str(), &options);
     if (error != 0)
     {
         const git_error *e = git_error_last();
-        throw std::runtime_error("Error al clonar el repositorio: " + std::string(e && e->message ? e->message : "Error desconocido"));
+        throw std::runtime_error("Error cloning the repository: " + std::string(e && e->message ? e->message : "Unknown error"));
     }
-    std::cout << "Repositorio clonado correctamente." << std::endl;
+    std::cout << "Repository cloned successfully." << std::endl;
     git_repository_free(repo);
 }
 
@@ -131,7 +131,7 @@ void clone::clone_(
     if (!std::filesystem::exists(repository))
         std::filesystem::create_directories(repository);
     else if (!std::filesystem::is_directory(repository))
-        throw std::runtime_error("La direccion del path del repositorio no es un directorio valido.");
+        throw std::runtime_error("The repository path is not a valid directory.");
     ///////////////////////////////////////////////////////////////////////////////////////
     if (std::filesystem::is_empty(repository))
         clone::_S_clone_repo(repository);
